@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { getTablouriActive, getTablouCuOferte, plaseazaOfertaAction, getProfilUtilizator, inregistreazaUtilizatorAction } from '@/actions/user-actions'
 import { Tablou, Oferta } from '@/types'
-import { supabaseClient } from '@/lib/supabase-client'
+import { supabaseClient, isSupabaseConfigured } from '@/lib/supabase-client'
 import ImageZoomModal from '@/components/ImageZoomModal'
 
 export default function UserBiddingPage() {
@@ -31,6 +31,8 @@ export default function UserBiddingPage() {
 
   // 1. Ascultam schimbarile de sesiune Auth
   useEffect(() => {
+    if (!isSupabaseConfigured) return
+
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSessionUser(session.user)
@@ -156,6 +158,8 @@ export default function UserBiddingPage() {
   }, [])
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return
+
     const channel = supabaseClient
       .channel('realtime-user-updates')
       .on(

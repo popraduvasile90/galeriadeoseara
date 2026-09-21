@@ -5,67 +5,77 @@ import { revalidatePath } from 'next/cache'
 import { Tablou } from '@/types'
 
 export async function getTablouri(): Promise<Tablou[]> {
-  const { data, error } = await supabaseAdmin
-    .from('tablouri')
-    .select(`
-      *,
-      oferte (
-        id,
-        tablou_id,
-        nume_utilizator,
-        telefon,
-        suma,
-        created_at
-      )
-    `)
-    .gt('data_limita', new Date().toISOString())
-    .order('created_at', { ascending: false })
-  
-  if (error) throw new Error(error.message)
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tablouri')
+      .select(`
+        *,
+        oferte (
+          id,
+          tablou_id,
+          nume_utilizator,
+          telefon,
+          suma,
+          created_at
+        )
+      `)
+      .gt('data_limita', new Date().toISOString())
+      .order('created_at', { ascending: false })
+    
+    if (error) throw new Error(error.message)
 
-  const tablouri = (data as any[]) || []
-  
-  tablouri.forEach((t) => {
-    if (t.oferte) {
-      t.oferte.sort((a: any, b: any) => b.suma - a.suma)
-    } else {
-      t.oferte = []
-    }
-  })
+    const tablouri = (data as any[]) || []
+    
+    tablouri.forEach((t) => {
+      if (t.oferte) {
+        t.oferte.sort((a: any, b: any) => b.suma - a.suma)
+      } else {
+        t.oferte = []
+      }
+    })
 
-  return tablouri as Tablou[]
+    return tablouri as Tablou[]
+  } catch (err: any) {
+    console.error('Baza de date inaccesibilă:', err?.message || err)
+    return []
+  }
 }
 
 export async function getTablouriAdjudecate(): Promise<Tablou[]> {
-  const { data, error } = await supabaseAdmin
-    .from('tablouri')
-    .select(`
-      *,
-      oferte (
-        id,
-        tablou_id,
-        nume_utilizator,
-        telefon,
-        suma,
-        created_at
-      )
-    `)
-    .lte('data_limita', new Date().toISOString())
-    .order('data_limita', { ascending: false })
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tablouri')
+      .select(`
+        *,
+        oferte (
+          id,
+          tablou_id,
+          nume_utilizator,
+          telefon,
+          suma,
+          created_at
+        )
+      `)
+      .lte('data_limita', new Date().toISOString())
+      .order('data_limita', { ascending: false })
 
-  if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message)
 
-  const tablouri = (data as any[]) || []
-  
-  tablouri.forEach((t) => {
-    if (t.oferte) {
-      t.oferte.sort((a: any, b: any) => b.suma - a.suma)
-    } else {
-      t.oferte = []
-    }
-  })
+    const tablouri = (data as any[]) || []
+    
+    tablouri.forEach((t) => {
+      if (t.oferte) {
+        t.oferte.sort((a: any, b: any) => b.suma - a.suma)
+      } else {
+        t.oferte = []
+      }
+    })
 
-  return tablouri as Tablou[]
+    return tablouri as Tablou[]
+  } catch (err: any) {
+    console.error('Baza de date inaccesibilă:', err?.message || err)
+    return []
+  }
 }
 
 export async function adaugaTablou(formData: FormData) {

@@ -1,71 +1,86 @@
 'use server'
 
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase'
 import { revalidatePath } from 'next/cache'
 import { Tablou } from '@/types'
 
 export async function getTablouriActive(): Promise<Tablou[]> {
-  const { data, error } = await supabaseAdmin
-    .from('tablouri')
-    .select(`
-      *,
-      oferte (
-        id,
-        tablou_id,
-        user_id,
-        nume_utilizator,
-        telefon,
-        suma,
-        created_at
-      )
-    `)
-    .order('data_limita', { ascending: true })
-  
-  if (error) throw new Error(error.message)
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tablouri')
+      .select(`
+        *,
+        oferte (
+          id,
+          tablou_id,
+          user_id,
+          nume_utilizator,
+          telefon,
+          suma,
+          created_at
+        )
+      `)
+      .order('data_limita', { ascending: true })
+    
+    if (error) throw new Error(error.message)
 
-  const tablouri = (data as any[]) || []
-  
-  tablouri.forEach((t) => {
-    if (t.oferte) {
-      t.oferte.sort((a: any, b: any) => b.suma - a.suma)
-    } else {
-      t.oferte = []
-    }
-  })
+    const tablouri = (data as any[]) || []
+    
+    tablouri.forEach((t) => {
+      if (t.oferte) {
+        t.oferte.sort((a: any, b: any) => b.suma - a.suma)
+      } else {
+        t.oferte = []
+      }
+    })
 
-  return tablouri as Tablou[]
+    return tablouri as Tablou[]
+  } catch (err: any) {
+    console.error('Baza de date inaccesibilă sau lipsă chei Supabase:', err?.message || err)
+    return []
+  }
 }
 
 export async function getTablouCuOferte(id: string): Promise<Tablou | null> {
-  const { data, error } = await supabaseAdmin
-    .from('tablouri')
-    .select(`
-      *,
-      oferte (
-        id,
-        tablou_id,
-        user_id,
-        nume_utilizator,
-        telefon,
-        suma,
-        created_at
-      )
-    `)
-    .eq('id', id)
-    .single()
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tablouri')
+      .select(`
+        *,
+        oferte (
+          id,
+          tablou_id,
+          user_id,
+          nume_utilizator,
+          telefon,
+          suma,
+          created_at
+        )
+      `)
+      .eq('id', id)
+      .single()
 
-  if (error) return null
-  
-  const tablou = data as any
-  if (tablou && tablou.oferte) {
-    tablou.oferte.sort((a: any, b: any) => b.suma - a.suma)
+    if (error) return null
+    
+    const tablou = data as any
+    if (tablou && tablou.oferte) {
+      tablou.oferte.sort((a: any, b: any) => b.suma - a.suma)
+    }
+    return tablou as Tablou
+  } catch {
+    return null
   }
-  return tablou as Tablou
 }
 
 // Înregistrează un utilizator nou folosind nume, email (ca string unic) și parolă
 export async function inregistreazaUtilizatorAction(nume: string, email: string, parola: string) {
   try {
+    if (!isSupabaseAdminConfigured) {
+      return {
+        success: false,
+        error: 'Proiectul Supabase nu este conectat încă. Adaugă cheile din noul tău proiect Supabase în fișierul .env.local pentru a activa creearea de conturi!'
+      }
+    }
     const numeTrim = nume.trim()
     const emailTrim = email.trim().toLowerCase()
     const parolaTrim = parola.trim()
@@ -138,6 +153,13 @@ export async function plaseazaOfertaAction(
   suma: number
 ) {
   try {
+    if (!isSupabaseAdminConfigured) {
+      return { 
+        success: false, 
+        error: 'Proiectul Supabase nu este conectat încă. Adaugă cheile din noul tău proiect Supabase în fișierul .env.local pentru a activa licitarea!' 
+      }
+    }
+
     if (isNaN(suma) || suma <= 0) {
       return { success: false, error: 'Suma oferită trebuie să fie pozitivă.' }
     }
