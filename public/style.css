@@ -616,6 +616,12 @@ h2.section-title {
 .footer-principium {
   color: var(--text-dark);
   font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-principium:hover {
+  color: var(--primary-red);
 }
 
 /* Success notification message */
